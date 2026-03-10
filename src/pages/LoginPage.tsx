@@ -65,7 +65,7 @@ export default function LoginPage() {
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white dark:bg-slate-900 p-8 md:p-12 rounded-3xl shadow-2xl w-full max-w-md border border-slate-100 dark:border-slate-800"
+          className="bg-white dark:bg-slate-900 p-6 md:p-12 rounded-3xl shadow-2xl w-full max-w-sm md:max-w-md lg:max-w-lg border border-slate-100 dark:border-slate-800"
         >
           <h1 className="text-3xl font-bold mb-2">Welcome to Smart Bus App</h1>
           <p className="text-slate-500 mb-8">Track buses, book tickets, and travel smarter</p>
