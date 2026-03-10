@@ -1,0 +1,7 @@
+{
+  "name": "TNBusTrack",
+  "description": "A smart public transport platform for Tamil Nadu providing real-time bus tracking, timings, and route discovery.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
