@@ -28,13 +28,13 @@ const BusStandSchema = new Schema({
 
 const BusRouteSchema = new Schema({
   bus_number: { type: String, required: true },
-  operator: { type: String, enum: ['TNSTC', 'SETC', 'MTC', 'Private'], required: true },
-  source: { type: String, required: true },
-  destination: { type: String, required: true },
-  distance: { type: Number }, // in km
-  stops: [{ type: String }],
-  district: { type: String },
-  villages_covered: [{ type: String }]
+  bus_type: { type: String, required: true },
+  source: { type: String, required: true, index: true },
+  destination: { type: String, required: true, index: true },
+  departure_time: { type: String, required: true },
+  arrival_time: { type: String, required: true },
+  ticket_price_rs: { type: Number, required: true },
+  available_seats: { type: Number, required: true },
 });
 
 const BusStopSchema = new Schema({
@@ -73,10 +73,38 @@ const BusLocationSchema = new Schema({
 });
 
 const UserSchema = new Schema({
+  googleId: { type: String, unique: true, sparse: true },
   name: { type: String, required: true },
-  phone: { type: String, required: true, unique: true },
-  email: { type: String },
-  favorite_routes: [{ type: Schema.Types.ObjectId, ref: 'BusRoute' }]
+  email: { type: String, required: true, unique: true },
+  picture: { type: String },
+  role: { type: String, enum: ['user', 'admin'], default: 'user' },
+  phone: { type: String },
+  favorite_routes: [{ type: Schema.Types.ObjectId, ref: 'BusRoute' }],
+  createdAt: { type: Date, default: Date.now }
+});
+
+const BookingSchema = new Schema({
+  userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+  busRouteId: { type: Schema.Types.ObjectId, ref: 'BusRoute', required: true },
+  bus_number: { type: String },
+  source: { type: String },
+  destination: { type: String },
+  distance_km: { type: Number },
+  travelDate: { type: Date, required: true },
+  seats: [{ type: String, required: true }],
+  totalPrice: { type: Number, required: true },
+  status: { type: String, enum: ['Confirmed', 'Cancelled', 'Pending'], default: 'Confirmed' },
+  paymentId: { type: String },
+  qrCodeData: { type: String },
+  createdAt: { type: Date, default: Date.now }
+});
+
+const ReviewSchema = new Schema({
+  userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+  busRouteId: { type: Schema.Types.ObjectId, ref: 'BusRoute', required: true },
+  rating: { type: Number, required: true, min: 1, max: 5 },
+  comment: { type: String },
+  createdAt: { type: Date, default: Date.now }
 });
 
 const DriverSchema = new Schema({
@@ -118,3 +146,22 @@ export const User = mongoose.models.User || mongoose.model('User', UserSchema);
 export const Driver = mongoose.models.Driver || mongoose.model('Driver', DriverSchema);
 export const Announcement = mongoose.models.Announcement || mongoose.model('Announcement', AnnouncementSchema);
 export const Feedback = mongoose.models.Feedback || mongoose.model('Feedback', FeedbackSchema);
+export const Booking = mongoose.models.Booking || mongoose.model('Booking', BookingSchema);
+export const Review = mongoose.models.Review || mongoose.model('Review', ReviewSchema);
+export const SOSAlert = mongoose.models.SOSAlert || mongoose.model('SOSAlert', new Schema({
+  user_id: { type: String, required: true },
+  bus_number: { type: String, required: true },
+  latitude: { type: Number, required: true },
+  longitude: { type: Number, required: true },
+  timestamp: { type: Date, default: Date.now },
+  status: { type: String, enum: ['Pending', 'Resolved'], default: 'Pending' }
+}));
+
+export const Seat = mongoose.models.Seat || mongoose.model('Seat', new Schema({
+  bus_route_id: { type: Schema.Types.ObjectId, ref: 'BusRoute', required: true },
+  seat_number: { type: String, required: true },
+  is_window: { type: Boolean, default: false },
+  is_booked: { type: Boolean, default: false },
+  proximity_score: { type: Number, default: 0 },
+  travel_date: { type: Date, required: true }
+}));

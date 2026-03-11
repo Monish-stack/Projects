@@ -61,8 +61,8 @@ export const mockTimings = [
 ];
 
 export const mockLiveBuses = [
-  { bus_id: "TN01AB1234", route_id: "R001", latitude: 13.0500, longitude: 80.1000, speed: 45, next_stop: "Sriperumbudur", eta_next_stop: "15 mins", last_updated: new Date().toISOString() },
-  { bus_id: "TN07CD5678", route_id: "R002", latitude: 11.9401, longitude: 79.4861, speed: 60, next_stop: "Villupuram", eta_next_stop: "10 mins", last_updated: new Date().toISOString() },
+  { bus_id: "TN01AB1234", route_id: "R001", latitude: 13.0500, longitude: 80.1000, speed: 45, status: "On Time", next_stop: "Sriperumbudur", eta_next_stop: "15 mins", last_updated: new Date().toISOString() },
+  { bus_id: "TN07CD5678", route_id: "R002", latitude: 11.9401, longitude: 79.4861, speed: 60, status: "Delayed", next_stop: "Villupuram", eta_next_stop: "10 mins", last_updated: new Date().toISOString() },
 ];
 
 export const mockAnnouncements = [

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Users, Bus, Map, Activity, Upload, Plus, Bell, MessageSquare, CheckCircle, XCircle } from 'lucide-react';
 import { io } from 'socket.io-client';
 
@@ -19,8 +19,18 @@ export default function AdminDashboard() {
     setSocket(newSocket);
 
     fetch('/api/admin/feedback')
-      .then(res => res.json())
-      .then(data => setFeedbacks(data));
+      .then(async res => {
+        const contentType = res.headers.get("content-type");
+        if (!res.ok) throw new Error(`HTTP error: ${res.status}`);
+        if (!contentType || !contentType.includes("application/json")) {
+          const text = await res.text();
+          console.error("Server returned HTML:", text);
+          throw new Error("Expected JSON but received HTML");
+        }
+        return res.json();
+      })
+      .then(data => setFeedbacks(data))
+      .catch(err => console.error("API request failed:", err));
 
     return () => {
       newSocket.disconnect();
@@ -35,6 +45,17 @@ export default function AdminDashboard() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(announcement)
       });
+      
+      const contentType = res.headers.get("content-type");
+      if (!res.ok) {
+        throw new Error(`HTTP error: ${res.status}`);
+      }
+      if (!contentType || !contentType.includes("application/json")) {
+        const text = await res.text();
+        console.error("Server returned HTML:", text);
+        throw new Error("Expected JSON but received HTML");
+      }
+      
       const data = await res.json();
       if (data.success) {
         socket?.emit('admin:broadcast_announcement', data.announcement);
@@ -48,11 +69,23 @@ export default function AdminDashboard() {
 
   const updateFeedbackStatus = async (id: string, status: string) => {
     try {
-      await fetch(`/api/admin/feedback/${id}/status`, {
+      const res = await fetch(`/api/admin/feedback/${id}/status`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status })
       });
+      
+      const contentType = res.headers.get("content-type");
+      if (!res.ok) {
+        throw new Error(`HTTP error: ${res.status}`);
+      }
+      if (!contentType || !contentType.includes("application/json")) {
+        const text = await res.text();
+        console.error("Server returned HTML:", text);
+        throw new Error("Expected JSON but received HTML");
+      }
+      
+      await res.json();
       setFeedbacks(prev => prev.map(f => f._id === id ? { ...f, status } : f));
     } catch (error) {
       console.error('Error updating feedback:', error);

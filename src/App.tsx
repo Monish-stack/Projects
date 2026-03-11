@@ -7,12 +7,13 @@ import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { Bus, Globe } from 'lucide-react';
 import PassengerApp from './pages/PassengerApp';
 import DriverApp from './pages/DriverApp';
-import AdminDashboard from './pages/AdminDashboard';
-import MyBookings from './pages/MyBookings';
-import LoginPage from './pages/LoginPage';
+import { AdminDashboard } from './pages/AdminPages';
+import AnalyticsDashboard from './pages/AnalyticsDashboard';
+import { BusSearchPage, BusResultsPage, SeatSelectionPage, TicketBookingPage, BookingConfirmationPage, TicketQRCodePage } from './pages/BookingFlow';
+import { UserLoginPage, UserSignupPage, UserDashboard } from './pages/UserPages';
+import { LiveBusTrackingPage } from './pages/TrackingPages';
 import SidebarMenu from './components/SidebarMenu';
 import { LanguageProvider, useLanguage } from './utils/LanguageContext';
-import { Language } from './utils/translations';
 
 function LanguageSelector() {
   const { language, setLanguage } = useLanguage();
@@ -32,11 +33,18 @@ function LanguageSelector() {
   );
 }
 
+import { LiveTracker } from './pages/LiveTracker';
+
+import { SOSButton } from './components/SOSButton';
+import Chatbot from './components/Chatbot';
+
 export default function App() {
   return (
     <LanguageProvider>
       <Router>
         <div className="min-h-screen bg-slate-50 flex flex-col font-sans selection:bg-indigo-200 selection:text-indigo-900">
+          <SOSButton />
+          <Chatbot />
           <header className="bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-lg sticky top-0 z-50">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
               <div className="flex justify-between h-16 items-center">
@@ -51,6 +59,7 @@ export default function App() {
                 </div>
                 <div className="flex items-center">
                   <LanguageSelector />
+                  <Link to="/login" className="ml-4 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-xl text-sm font-bold transition-colors">Login</Link>
                 </div>
               </div>
             </div>
@@ -59,10 +68,21 @@ export default function App() {
           <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 animate-in fade-in duration-500">
             <Routes>
               <Route path="/" element={<PassengerApp />} />
+              <Route path="/search" element={<BusSearchPage />} />
+              <Route path="/results" element={<BusResultsPage />} />
+              <Route path="/seats/:busId" element={<SeatSelectionPage />} />
+              <Route path="/checkout" element={<TicketBookingPage />} />
+              <Route path="/confirmation" element={<BookingConfirmationPage />} />
+              <Route path="/ticket" element={<TicketQRCodePage />} />
+              
+              <Route path="/login" element={<UserLoginPage />} />
+              <Route path="/signup" element={<UserSignupPage />} />
+              <Route path="/dashboard" element={<UserDashboard />} />
+              
+              <Route path="/track" element={<LiveTracker />} />
+              <Route path="/analytics" element={<AnalyticsDashboard />} />
               <Route path="/driver" element={<DriverApp />} />
               <Route path="/admin" element={<AdminDashboard />} />
-              <Route path="/bookings" element={<MyBookings />} />
-              <Route path="/login" element={<LoginPage />} />
             </Routes>
           </main>
         </div>

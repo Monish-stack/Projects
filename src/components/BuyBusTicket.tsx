@@ -92,6 +92,7 @@ export default function BuyBusTicket() {
   
   // Booking Flow State
   const [selectedBus, setSelectedBus] = useState<any>(null);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [showPassengerForm, setShowPassengerForm] = useState(false);
   const [passengerDetails, setPassengerDetails] = useState({ name: '', age: '', phone: '', email: '' });
   const [showPayment, setShowPayment] = useState(false);
@@ -118,6 +119,11 @@ export default function BuyBusTicket() {
 
   const handleBookClick = (bus: any) => {
     setSelectedBus(bus);
+    setShowConfirmDialog(true);
+  };
+
+  const handleConfirmBooking = () => {
+    setShowConfirmDialog(false);
     setShowPassengerForm(true);
   };
 
@@ -299,6 +305,60 @@ export default function BuyBusTicket() {
           </div>
         )}
       </div>
+
+      {/* Confirmation Dialog */}
+      {showConfirmDialog && selectedBus && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[2000] flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-indigo-50/50">
+              <h3 className="text-xl font-display font-bold text-slate-800">Confirm Booking</h3>
+              <button 
+                onClick={() => setShowConfirmDialog(false)}
+                className="p-2 hover:bg-slate-200 rounded-full transition-colors text-slate-500"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="p-6">
+              <div className="mb-6">
+                <p className="text-slate-600 mb-4">You are about to book tickets for the following journey:</p>
+                <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-500 text-sm">Route</span>
+                    <span className="font-bold text-slate-800">{from} <ArrowRight className="inline h-3 w-3 mx-1 text-slate-400" /> {to}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-500 text-sm">Bus</span>
+                    <span className="font-bold text-slate-800">{selectedBus.operator || selectedBus.bus_no} ({selectedBus.type})</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-500 text-sm">Departure</span>
+                    <span className="font-bold text-slate-800">{selectedBus.departure}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-500 text-sm">Passengers</span>
+                    <span className="font-bold text-slate-800">{passengers}</span>
+                  </div>
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowConfirmDialog(false)}
+                  className="flex-1 px-4 py-3 bg-slate-100 text-slate-700 font-bold rounded-xl hover:bg-slate-200 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleConfirmBooking}
+                  className="flex-1 px-4 py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition-colors"
+                >
+                  Proceed to Details
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Passenger Details Modal */}
       {showPassengerForm && (

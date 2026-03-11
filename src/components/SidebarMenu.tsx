@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { Menu, X, Bus, MapPin, Navigation, Settings, Ticket } from 'lucide-react';
+import { Menu, X, Bus, MapPin, Navigation, Settings, Ticket, TrendingUp } from 'lucide-react';
 
 export default function SidebarMenu() {
   const [isOpen, setIsOpen] = useState(false);
@@ -24,10 +24,13 @@ export default function SidebarMenu() {
   }, [isOpen]);
 
   const menuItems = [
-    { path: '/', label: 'Passenger', icon: MapPin },
-    { path: '/driver', label: 'Driver', icon: Navigation },
-    { path: '/admin', label: 'Admin', icon: Settings },
-    { path: '/bookings', label: 'My Bookings', icon: Ticket },
+    { path: '/', label: 'Home', icon: MapPin },
+    { path: '/search', label: 'Search Buses', icon: Bus },
+    { path: '/track', label: 'Live Tracking', icon: Navigation },
+    { path: '/analytics', label: 'AI Analytics', icon: TrendingUp },
+    { path: '/dashboard', label: 'My Dashboard', icon: Ticket },
+    { path: '/driver', label: 'Driver Portal', icon: Navigation },
+    { path: '/admin', label: 'Admin Portal', icon: Settings },
   ];
 
   return (

@@ -33,15 +33,27 @@ export default function Chatbot() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: userMsg })
       });
+      
+      const contentType = res.headers.get("content-type");
+      if (!res.ok) {
+        throw new Error(`HTTP error: ${res.status}`);
+      }
+      if (!contentType || !contentType.includes("application/json")) {
+        const text = await res.text();
+        console.error("Server returned HTML:", text);
+        throw new Error("Expected JSON but received HTML");
+      }
+      
       const data = await res.json();
       
-      if (data.reply) {
+      if (data && data.reply) {
         setMessages(prev => [...prev, { role: 'bot', text: data.reply }]);
       } else {
         setMessages(prev => [...prev, { role: 'bot', text: 'Sorry, I am having trouble connecting right now.' }]);
       }
     } catch (error) {
-      setMessages(prev => [...prev, { role: 'bot', text: 'Sorry, an error occurred.' }]);
+      console.error("API request failed:", error);
+      setMessages(prev => [...prev, { role: 'bot', text: 'Sorry, an error occurred while connecting to the server.' }]);
     } finally {
       setLoading(false);
     }

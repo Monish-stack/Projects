@@ -1,12 +1,93 @@
 import { Router } from 'express';
 import mongoose from 'mongoose';
 import { mockRoutes, mockStops, mockTimings, mockLiveBuses, mockAnnouncements, mockFeedback } from '../data/mockData.js';
-import { Feedback } from '../models/index.js';
+import { Feedback, SOSAlert } from '../models/index.js';
+
 import { GoogleGenAI } from '@google/genai';
 
 const router = Router();
 
+// SOS API
+router.post('/sos', async (req, res) => {
+  try {
+    const { user_id, bus_number, latitude, longitude } = req.body;
+    const alert = new SOSAlert({ user_id, bus_number, latitude, longitude });
+    await alert.save();
+    res.json({ success: true, message: 'SOS alert sent' });
+  } catch (error) {
+    console.error('SOS error:', error);
+    res.status(500).json({ error: 'Failed to send SOS' });
+  }
+});
+
+router.get('/seats/:busRouteId', async (req, res) => {
+  const { busRouteId } = req.params;
+  const { date } = req.query;
+
+  try {
+    const seats = await Seat.find({ bus_route_id: busRouteId, travel_date: date });
+    
+    // Recommendation Logic
+    const recommendedSeats = seats.map(seat => {
+      let score = 0;
+      if (seat.is_window) score += 5;
+      score += seat.proximity_score; // Higher is better (less crowded)
+      // Mock User Preference Score (could be fetched from user profile)
+      score += Math.random() * 3; 
+
+      return { ...seat.toObject(), score };
+    }).sort((a, b) => b.score - a.score);
+
+    const topSeats = recommendedSeats.slice(0, 3).map(s => s.seat_number);
+    
+    res.json(seats.map(s => ({
+      ...s.toObject(),
+      isRecommended: topSeats.includes(s.seat_number)
+    })));
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch seats' });
+  }
+});
+
 // Passenger APIs
+router.get('/user/analytics/:userId', async (req, res) => {
+  const { userId } = req.params;
+  try {
+    const bookings = await Booking.find({ userId });
+    
+    const totalTrips = bookings.length;
+    const totalDistance = bookings.reduce((sum, b) => sum + (b.distance_km || 0), 0);
+    const totalMoneySpent = bookings.reduce((sum, b) => sum + b.totalPrice, 0);
+    
+    const routeCounts: Record<string, number> = {};
+    bookings.forEach(b => {
+      const route = `${b.source} → ${b.destination}`;
+      routeCounts[route] = (routeCounts[route] || 0) + 1;
+    });
+    
+    let favoriteRoute = 'None';
+    let maxCount = 0;
+    for (const route in routeCounts) {
+      if (routeCounts[route] > maxCount) {
+        maxCount = routeCounts[route];
+        favoriteRoute = route;
+      }
+    }
+
+    const recentTrips = bookings.sort((a, b) => b.travelDate.getTime() - a.travelDate.getTime()).slice(0, 5);
+
+    res.json({
+      totalTrips,
+      totalDistance,
+      totalMoneySpent,
+      favoriteRoute,
+      recentTrips
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch analytics' });
+  }
+});
+
 router.post('/chat', async (req, res) => {
   try {
     const { message } = req.body;
@@ -36,29 +117,176 @@ router.post('/chat', async (req, res) => {
   }
 });
 
-router.get('/buses', (req, res) => {
+import { Booking, BusRoute, User } from '../models/index.js';
+import { routeEngine, formatDuration } from '../services/routeEngine';
+import { AnalyticsEngine } from '../services/AnalyticsEngine';
+import { trackingService } from '../services/trackingService';
+
+router.get('/tracking/buses', (req, res) => {
+  const buses = trackingService.getActiveBuses();
+  res.json({ buses });
+});
+
+router.get('/analytics', async (req, res) => {
+  try {
+    const analytics = await AnalyticsEngine.generateAnalytics();
+    res.json(analytics);
+  } catch (error) {
+    console.error('Analytics error:', error);
+    res.status(500).json({ error: 'Failed to generate analytics' });
+  }
+});
+
+router.post('/book', async (req, res) => {
+  try {
+    const { busRouteId, travelDate, seats, totalPrice, userId } = req.body;
+    
+    if (!busRouteId || !travelDate || !seats || !seats.length || !totalPrice) {
+      return res.status(400).json({ error: 'Missing required booking details' });
+    }
+
+    // In a real app, we'd verify the user from a token
+    // For now, we'll create a dummy user if none provided, or use the provided one
+    let actualUserId = userId;
+    if (!actualUserId && mongoose.connection.readyState === 1) {
+      let user = await User.findOne({ email: 'guest@example.com' });
+      if (!user) {
+        user = await User.create({ name: 'Guest User', email: 'guest@example.com' });
+      }
+      actualUserId = user._id;
+    }
+
+    if (mongoose.connection.readyState === 1) {
+      // Update available seats
+      const bus = await BusRoute.findById(busRouteId);
+      if (!bus) {
+        return res.status(404).json({ error: 'Bus route not found' });
+      }
+
+      if (bus.available_seats < seats.length) {
+        return res.status(400).json({ error: 'Not enough seats available' });
+      }
+
+      bus.available_seats -= seats.length;
+      await bus.save();
+
+      const booking = new Booking({
+        userId: actualUserId,
+        busRouteId,
+        travelDate: new Date(travelDate),
+        seats,
+        totalPrice,
+        status: 'Confirmed',
+        qrCodeData: `TNSTC-${Date.now()}-${Math.floor(Math.random() * 1000)}`
+      });
+
+      await booking.save();
+      
+      // Re-load route engine cache to reflect new seat counts
+      await routeEngine.loadDataset();
+
+      return res.json({ success: true, booking });
+    } else {
+      // Fallback for no DB
+      return res.json({ 
+        success: true, 
+        booking: { 
+          _id: `B${Date.now()}`,
+          seats,
+          totalPrice,
+          status: 'Confirmed',
+          qrCodeData: `TNSTC-${Date.now()}-${Math.floor(Math.random() * 1000)}`
+        } 
+      });
+    }
+  } catch (error) {
+    console.error('Booking error:', error);
+    res.status(500).json({ error: 'Failed to process booking' });
+  }
+});
+
+router.get(['/buses', '/search-buses'], async (req, res) => {
   const { from, to } = req.query;
-  let filteredRoutes = mockRoutes;
   
-  // Simulate an error if the user searches for a specific keyword or if they search for same district
+  console.log(`[API Search] From: ${from}, To: ${to}`);
+
   if (from && to && (from as string).toLowerCase() === (to as string).toLowerCase()) {
     return res.status(400).json({ error: 'Source and destination cannot be the same district.' });
   }
 
-  if (from && to) {
-    filteredRoutes = mockRoutes.filter(r => 
-      (r.source.toLowerCase() === (from as string).toLowerCase() || r.stops.some(s => s.toLowerCase().includes((from as string).toLowerCase()))) &&
-      (r.destination.toLowerCase() === (to as string).toLowerCase() || r.stops.some(s => s.toLowerCase().includes((to as string).toLowerCase())))
-    );
-  }
+  const source = (from as string) || 'Chennai';
+  const destination = (to as string) || 'Madurai';
 
-  // Attach timings to routes
-  const routesWithTimings = filteredRoutes.map(route => {
-    const timings = mockTimings.filter(t => t.route_id === route._id);
-    return { ...route, timings };
+  const routeOptions = await routeEngine.findRoutes(source, destination);
+  
+  console.log(`[API Search] Found ${routeOptions.length} route options`);
+
+  const statuses = ['On Time', 'Delayed', 'On Time', 'On Time'];
+
+  const results = routeOptions.map((option, index) => {
+    const status = statuses[Math.floor(Math.random() * statuses.length)];
+    
+    if (option.type === 'direct') {
+      const bus = option.buses[0];
+      return {
+        id: bus._id || `bus_${index}_${Date.now()}`,
+        bus_no: bus.bus_number,
+        type: bus.bus_type,
+        departure: bus.departure_time,
+        arrival: bus.arrival_time,
+        duration: formatDuration(option.total_duration_mins),
+        price: option.total_price,
+        seats: bus.available_seats,
+        status: status,
+        source: bus.source,
+        destination: bus.destination,
+        isConnecting: false,
+        connections: []
+      };
+    } else {
+      const bus1 = option.buses[0];
+      const bus2 = option.buses[1];
+      return {
+        id: `bus_${index}_${Date.now()}`,
+        bus_no: 'Connecting Route',
+        type: 'Multiple',
+        departure: bus1.departure_time,
+        arrival: bus2.arrival_time,
+        duration: formatDuration(option.total_duration_mins),
+        price: option.total_price,
+        seats: Math.min(bus1.available_seats, bus2.available_seats),
+        status: status,
+        source: bus1.source,
+        destination: bus2.destination,
+        isConnecting: true,
+        connections: [
+          {
+            id: bus1._id,
+            from: bus1.source,
+            to: bus1.destination,
+            bus_no: bus1.bus_number,
+            type: bus1.bus_type,
+            departure: bus1.departure_time,
+            arrival: bus1.arrival_time
+          },
+          {
+            id: bus2._id,
+            from: bus2.source,
+            to: bus2.destination,
+            bus_no: bus2.bus_number,
+            type: bus2.bus_type,
+            departure: bus2.departure_time,
+            arrival: bus2.arrival_time
+          }
+        ]
+      };
+    }
   });
 
-  res.json(routesWithTimings);
+  res.json({
+    message: results.length > 0 ? "Showing best available buses and nearby routes" : "No direct routes found. Please try another destination.",
+    buses: results
+  });
 });
 
 router.get('/routes', (req, res) => {
@@ -132,9 +360,33 @@ router.post('/driver/login', (req, res) => {
 });
 
 router.post('/bus-location', (req, res) => {
-  const { bus_id, latitude, longitude, timestamp } = req.body;
-  // In a real app, this would update the database and broadcast via socket.io
-  // Here we just acknowledge
+  const { bus_id, route_id, latitude, longitude, speed, status, timestamp } = req.body;
+  
+  // Update in-memory mock data
+  const existingBusIndex = mockLiveBuses.findIndex(b => b.bus_id === bus_id);
+  if (existingBusIndex >= 0) {
+    mockLiveBuses[existingBusIndex] = {
+      ...mockLiveBuses[existingBusIndex],
+      latitude,
+      longitude,
+      speed,
+      status: status || mockLiveBuses[existingBusIndex].status,
+      last_updated: timestamp || new Date().toISOString()
+    };
+  } else {
+    mockLiveBuses.push({
+      bus_id,
+      route_id,
+      latitude,
+      longitude,
+      speed,
+      status: status || 'On Time',
+      next_stop: 'Unknown',
+      eta_next_stop: 'Updating...',
+      last_updated: timestamp || new Date().toISOString()
+    });
+  }
+
   res.json({ success: true, message: 'Location updated' });
 });
 

@@ -7,6 +7,7 @@ export default function DriverApp() {
   const [isTracking, setIsTracking] = useState(false);
   const [busId, setBusId] = useState('TN01AB1234');
   const [routeId, setRouteId] = useState('R001');
+  const [status, setStatus] = useState('On Time');
   const [location, setLocation] = useState({ lat: 13.0500, lng: 80.1000 });
   const [socket, setSocket] = useState<any>(null);
 
@@ -27,6 +28,7 @@ export default function DriverApp() {
             latitude: newLat,
             longitude: newLng,
             speed: Math.floor(Math.random() * 20) + 40,
+            status: status,
             timestamp: new Date().toISOString()
           };
 
@@ -37,7 +39,18 @@ export default function DriverApp() {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data)
-          }).catch(console.error);
+          })
+          .then(async res => {
+            const contentType = res.headers.get("content-type");
+            if (!res.ok) throw new Error(`HTTP error: ${res.status}`);
+            if (!contentType || !contentType.includes("application/json")) {
+              const text = await res.text();
+              console.error("Server returned HTML:", text);
+              throw new Error("Expected JSON but received HTML");
+            }
+            return res.json();
+          })
+          .catch(err => console.error("API request failed:", err));
 
           return { lat: newLat, lng: newLng };
         });
@@ -105,7 +118,7 @@ export default function DriverApp() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-8 relative z-10">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-8 relative z-10">
           <div>
             <label className="block text-sm font-bold text-slate-700 mb-2 flex items-center gap-2">
               <Bus className="h-4 w-4 text-indigo-500" /> Bus Number
@@ -129,6 +142,34 @@ export default function DriverApp() {
               disabled={isTracking}
               className="w-full px-5 py-3.5 border border-slate-200 rounded-xl bg-slate-50 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none disabled:opacity-60 transition-colors font-mono font-bold text-slate-800" 
             />
+          </div>
+          <div>
+            <label className="block text-sm font-bold text-slate-700 mb-2 flex items-center gap-2">
+              <Clock className="h-4 w-4 text-indigo-500" /> Status
+            </label>
+            <select
+              value={status}
+              onChange={(e) => {
+                setStatus(e.target.value);
+                if (isTracking && socket) {
+                  // Emit immediately on change
+                  socket.emit('driver:location_update', {
+                    bus_id: busId,
+                    route_id: routeId,
+                    latitude: location.lat,
+                    longitude: location.lng,
+                    speed: Math.floor(Math.random() * 20) + 40,
+                    status: e.target.value,
+                    timestamp: new Date().toISOString()
+                  });
+                }
+              }}
+              className="w-full px-5 py-3.5 border border-slate-200 rounded-xl bg-slate-50 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-colors font-bold text-slate-800"
+            >
+              <option value="On Time">On Time</option>
+              <option value="Delayed">Delayed</option>
+              <option value="Arrived">Arrived</option>
+            </select>
           </div>
         </div>
 
