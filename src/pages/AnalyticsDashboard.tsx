@@ -5,6 +5,7 @@ import {
   PieChart, Pie, Cell, LineChart, Line
 } from 'recharts';
 import { TrendingUp, AlertCircle, Lightbulb, Map, Activity, DollarSign } from 'lucide-react';
+import { useLanguage } from '../utils/LanguageContext';
 
 interface AnalyticsData {
   stats: {
@@ -30,6 +31,7 @@ interface AnalyticsData {
 const COLORS = ['#6366f1', '#8b5cf6', '#ec4899', '#f43f5e', '#f97316', '#eab308', '#22c55e', '#06b6d4', '#3b82f6', '#a855f7'];
 
 export default function AnalyticsDashboard() {
+  const { t } = useLanguage();
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -60,7 +62,7 @@ export default function AnalyticsDashboard() {
     <div className="space-y-8 pb-20">
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-display font-bold text-slate-900">AI Transport Analytics</h1>
+          <h1 className="text-3xl font-display font-bold text-slate-900">{t('aiAnalytics') || "AI Transport Analytics"}</h1>
           <p className="text-slate-500">Predictive engine for profitable bus routes</p>
         </div>
         <div className="flex items-center gap-3 bg-indigo-50 px-4 py-2 rounded-2xl border border-indigo-100">

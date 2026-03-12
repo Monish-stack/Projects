@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { Menu, X, Bus, MapPin, Navigation, Settings, Ticket, TrendingUp } from 'lucide-react';
+import { Menu, X, Bus, MapPin, Navigation, Settings, Ticket, TrendingUp, Info, Star } from 'lucide-react';
+import { useLanguage } from '../utils/LanguageContext';
 
 export default function SidebarMenu() {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
   const sidebarRef = useRef<HTMLDivElement>(null);
+  const { t } = useLanguage();
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -24,13 +26,14 @@ export default function SidebarMenu() {
   }, [isOpen]);
 
   const menuItems = [
-    { path: '/', label: 'Home', icon: MapPin },
-    { path: '/search', label: 'Search Buses', icon: Bus },
-    { path: '/track', label: 'Live Tracking', icon: Navigation },
-    { path: '/analytics', label: 'AI Analytics', icon: TrendingUp },
-    { path: '/dashboard', label: 'My Dashboard', icon: Ticket },
-    { path: '/driver', label: 'Driver Portal', icon: Navigation },
-    { path: '/admin', label: 'Admin Portal', icon: Settings },
+    { path: '/', label: t('home'), icon: MapPin },
+    { path: '/track', label: t('liveTracking'), icon: Navigation },
+    { path: '/analytics', label: t('aiAnalytics'), icon: TrendingUp },
+    { path: '/dashboard', label: t('myDashboard'), icon: Ticket },
+    { path: '/reviews', label: t('reviews') || 'Reviews', icon: Star },
+    { path: '/driver', label: t('driverPortal'), icon: Navigation },
+    { path: '/admin', label: t('adminPortal'), icon: Settings },
+    { path: '/about', label: t('aboutApp') || 'About the app', icon: Info },
   ];
 
   return (

@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { MapPin, Navigation, Bus, Clock, AlertCircle } from 'lucide-react';
 import { io } from 'socket.io-client';
+import { useLanguage } from '../utils/LanguageContext';
 
 export function LiveBusTrackingPage() {
+  const { t } = useLanguage();
   const [liveBuses, setLiveBuses] = useState<any[]>([]);
   const [socket, setSocket] = useState<any>(null);
 
@@ -38,7 +40,7 @@ export function LiveBusTrackingPage() {
       <div className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-3xl font-display font-bold text-slate-800 flex items-center gap-3">
-            <Navigation className="h-8 w-8 text-indigo-600" /> Live Tracking
+            <Navigation className="h-8 w-8 text-indigo-600" /> {t('liveTracking') || 'Live Tracking'}
           </h1>
           <p className="text-slate-500 mt-1">Track your bus in real-time</p>
         </div>

@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Navigation, MapPin, CheckCircle2, AlertCircle, Bus, Route as RouteIcon, Clock, Users } from 'lucide-react';
 import { io } from 'socket.io-client';
+import { useLanguage } from '../utils/LanguageContext';
 
 export default function DriverApp() {
+  const { t } = useLanguage();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isTracking, setIsTracking] = useState(false);
   const [busId, setBusId] = useState('TN01AB1234');
@@ -73,7 +75,7 @@ export default function DriverApp() {
             <Navigation className="h-10 w-10 text-indigo-600" />
           </div>
         </div>
-        <h2 className="text-3xl font-display font-bold text-center text-slate-800 mb-2 relative z-10">Driver Portal</h2>
+        <h2 className="text-3xl font-display font-bold text-center text-slate-800 mb-2 relative z-10">{t('driverPortal') || 'Driver Portal'}</h2>
         <p className="text-center text-slate-500 mb-8 relative z-10">Sign in to start your shift</p>
         
         <form onSubmit={(e) => { e.preventDefault(); setIsLoggedIn(true); }} className="space-y-5 relative z-10">
@@ -82,11 +84,11 @@ export default function DriverApp() {
             <input type="text" defaultValue="D123" className="w-full px-5 py-3.5 border border-slate-200 rounded-xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none bg-slate-50 hover:bg-white transition-colors" required />
           </div>
           <div>
-            <label className="block text-sm font-bold text-slate-700 mb-2">Password</label>
+            <label className="block text-sm font-bold text-slate-700 mb-2">{t('password') || 'Password'}</label>
             <input type="password" defaultValue="password" className="w-full px-5 py-3.5 border border-slate-200 rounded-xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none bg-slate-50 hover:bg-white transition-colors" required />
           </div>
           <button type="submit" className="w-full py-4 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 hover:shadow-lg hover:shadow-indigo-600/20 transition-all mt-4">
-            Login to Dashboard
+            {t('signIn') || 'Login to Dashboard'}
           </button>
         </form>
       </div>

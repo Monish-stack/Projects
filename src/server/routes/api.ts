@@ -25,7 +25,26 @@ router.get('/seats/:busRouteId', async (req, res) => {
   const { date } = req.query;
 
   try {
-    const seats = await Seat.find({ bus_route_id: busRouteId, travel_date: date });
+    let seats = [];
+    if (mongoose.connection.readyState === 1) {
+      seats = await Seat.find({ bus_route_id: busRouteId, travel_date: date });
+    } else {
+      // Mock seats
+      const rows = 10;
+      const cols = 4;
+      for (let i = 0; i < rows; i++) {
+        for (let j = 0; j < cols; j++) {
+          const seatNumber = `${String.fromCharCode(65 + i)}${j + 1}`;
+          seats.push({
+            seat_number: seatNumber,
+            is_window: j === 0 || j === cols - 1,
+            is_booked: Math.random() > 0.7,
+            proximity_score: Math.floor(Math.random() * 10),
+            toObject: function() { return this; }
+          });
+        }
+      }
+    }
     
     // Recommendation Logic
     const recommendedSeats = seats.map(seat => {
@@ -45,6 +64,7 @@ router.get('/seats/:busRouteId', async (req, res) => {
       isRecommended: topSeats.includes(s.seat_number)
     })));
   } catch (error) {
+    console.error('Seats error:', error);
     res.status(500).json({ error: 'Failed to fetch seats' });
   }
 });
@@ -117,7 +137,7 @@ router.post('/chat', async (req, res) => {
   }
 });
 
-import { Booking, BusRoute, User } from '../models/index.js';
+import { Booking, BusRoute, User, Seat } from '../models/index.js';
 import { routeEngine, formatDuration } from '../services/routeEngine';
 import { AnalyticsEngine } from '../services/AnalyticsEngine';
 import { trackingService } from '../services/trackingService';

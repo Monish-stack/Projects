@@ -1,156 +1,100 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
-import { Phone, Globe, Moon, Sun, AlertCircle, CheckCircle2 } from 'lucide-react';
-import { useLanguage } from '../utils/LanguageContext';
+import { Bus, Mail, Phone, ArrowRight, Chrome, ShieldCheck } from 'lucide-react';
+import { useAuth } from '../utils/AuthContext';
 
-export default function LoginPage() {
-  const { language, setLanguage, t } = useLanguage();
-  const [isDarkMode, setIsDarkMode] = useState(false);
-  const [method, setMethod] = useState<'google' | 'phone'>('phone');
-  const [phoneNumber, setPhoneNumber] = useState('');
-  const [otp, setOtp] = useState(['', '', '', '', '', '']);
-  const [isOtpSent, setIsOtpSent] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState(false);
+export function LoginPage() {
+  const { login, isLoading } = useAuth();
+  const [method, setMethod] = useState<'google' | 'phone'>('google');
+  const [identifier, setIdentifier] = useState('');
 
-  const toggleDarkMode = () => setIsDarkMode(!isDarkMode);
-  const toggleLanguage = () => setLanguage(language === 'en' ? 'ta' : 'en');
-
-  const handlePhoneSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    setError('');
-    // Simulate OTP sending
-    setTimeout(() => {
-      setLoading(false);
-      setIsOtpSent(true);
-    }, 1500);
-  };
-
-  const handleOtpSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    // Simulate verification
-    setTimeout(() => {
-      setLoading(false);
-      if (otp.join('') === '123456') {
-        setSuccess(true);
-      } else {
-        setError('Invalid OTP. Please try again.');
-      }
-    }, 1500);
+    if (!identifier) return;
+    await login(method, identifier);
   };
 
   return (
-    <div className={`min-h-screen ${isDarkMode ? 'bg-slate-950 text-white' : 'bg-slate-50 text-slate-900'} transition-colors duration-300 font-sans`}>
-      {/* Header */}
-      <header className="flex justify-between items-center p-6 max-w-7xl mx-auto">
-        <div className="flex items-center gap-2">
-          <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white font-bold text-xl">B</div>
-          <span className="font-bold text-xl tracking-tight">SmartBus</span>
-        </div>
-        <div className="flex items-center gap-4">
-          <button onClick={toggleLanguage} className="flex items-center gap-2 px-4 py-2 rounded-full bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors">
-            <Globe className="h-4 w-4" /> {language === 'en' ? 'EN' : 'TA'}
-          </button>
-          <button onClick={toggleDarkMode} className="p-2 rounded-full bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors">
-            {isDarkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-          </button>
-        </div>
-      </header>
+    <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Background Elements */}
+      <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-indigo-600/20 rounded-full blur-[120px] animate-pulse"></div>
+        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-violet-600/20 rounded-full blur-[120px] animate-pulse delay-700"></div>
+      </div>
 
-      {/* Main Content */}
-      <main className="flex items-center justify-center p-6 min-h-[calc(100vh-100px)]">
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-white dark:bg-slate-900 p-6 md:p-12 rounded-3xl shadow-2xl w-full max-w-sm md:max-w-md lg:max-w-lg border border-slate-100 dark:border-slate-800"
-        >
-          <h1 className="text-3xl font-bold mb-2">Welcome to Smart Bus App</h1>
-          <p className="text-slate-500 mb-8">Track buses, book tickets, and travel smarter</p>
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="w-full max-w-md bg-slate-900/50 backdrop-blur-xl border border-white/10 rounded-[2.5rem] p-8 md:p-12 shadow-2xl relative z-10"
+      >
+        <div className="text-center mb-10">
+          <div className="w-20 h-20 bg-indigo-600 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-xl shadow-indigo-600/20 rotate-3">
+            <Bus className="h-10 w-10 text-white" />
+          </div>
+          <h1 className="text-3xl font-black text-white mb-2">Welcome Back</h1>
+          <p className="text-slate-400">Your journey across Tamil Nadu continues here.</p>
+        </div>
 
-          <div className="mb-8 flex justify-center">
-            <div className="w-32 h-32 bg-indigo-100 dark:bg-indigo-900/30 rounded-full flex items-center justify-center">
-              <span className="text-6xl">🚌</span>
+        <div className="flex p-1 bg-slate-800/50 rounded-2xl mb-8">
+          <button 
+            onClick={() => setMethod('google')}
+            className={`flex-1 py-3 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 ${method === 'google' ? 'bg-white text-slate-900 shadow-lg' : 'text-slate-400 hover:text-white'}`}
+          >
+            <Chrome className="h-4 w-4" /> Google
+          </button>
+          <button 
+            onClick={() => setMethod('phone')}
+            className={`flex-1 py-3 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 ${method === 'phone' ? 'bg-white text-slate-900 shadow-lg' : 'text-slate-400 hover:text-white'}`}
+          >
+            <Phone className="h-4 w-4" /> Mobile
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="space-y-2">
+            <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">
+              {method === 'google' ? 'Gmail Address' : 'Mobile Number'}
+            </label>
+            <div className="relative group">
+              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-indigo-400 transition-colors">
+                {method === 'google' ? <Mail className="h-5 w-5" /> : <Phone className="h-5 w-5" />}
+              </div>
+              <input 
+                type={method === 'google' ? 'email' : 'tel'}
+                placeholder={method === 'google' ? 'name@gmail.com' : '+91 98765 43210'}
+                value={identifier}
+                onChange={(e) => setIdentifier(e.target.value)}
+                required
+                className="w-full pl-12 pr-4 py-4 bg-slate-800/50 border border-white/5 rounded-2xl text-white placeholder:text-slate-600 outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all"
+              />
             </div>
           </div>
 
-          {!success ? (
-            <div className="space-y-6">
-              {!isOtpSent ? (
-                <>
-                  <button className="w-full flex items-center justify-center gap-3 py-3 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">
-                    <img src="https://www.google.com/favicon.ico" alt="Google" className="w-5 h-5" />
-                    Continue with Google
-                  </button>
-                  <div className="flex items-center gap-4">
-                    <div className="h-px flex-1 bg-slate-200 dark:bg-slate-700"></div>
-                    <span className="text-slate-400 text-sm">OR</span>
-                    <div className="h-px flex-1 bg-slate-200 dark:bg-slate-700"></div>
-                  </div>
-                  <form onSubmit={handlePhoneSubmit} className="space-y-4">
-                    <div className="relative">
-                      <Phone className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
-                      <input 
-                        type="tel" 
-                        value={phoneNumber}
-                        onChange={(e) => setPhoneNumber(e.target.value)}
-                        placeholder="+91 Phone Number"
-                        className="w-full pl-12 pr-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-transparent outline-none focus:ring-2 focus:ring-indigo-500"
-                      />
-                    </div>
-                    <label className="flex items-center gap-2 text-sm text-slate-500">
-                      <input type="checkbox" className="rounded border-slate-300" /> Remember Me
-                    </label>
-                    <button type="submit" disabled={loading} className="w-full py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition-all">
-                      {loading ? 'Sending...' : 'Send OTP'}
-                    </button>
-                  </form>
-                </>
-              ) : (
-                <form onSubmit={handleOtpSubmit} className="space-y-6">
-                  <p className="text-sm">Enter the OTP sent to {phoneNumber}</p>
-                  <div className="flex justify-between gap-2">
-                    {otp.map((digit, i) => (
-                      <input 
-                        key={i}
-                        type="text"
-                        maxLength={1}
-                        value={digit}
-                        onChange={(e) => {
-                          const newOtp = [...otp];
-                          newOtp[i] = e.target.value;
-                          setOtp(newOtp);
-                        }}
-                        className="w-12 h-14 text-center text-xl font-bold rounded-xl border border-slate-200 dark:border-slate-700 bg-transparent outline-none focus:ring-2 focus:ring-indigo-500"
-                      />
-                    ))}
-                  </div>
-                  {error && <p className="text-red-500 text-sm flex items-center gap-2"><AlertCircle className="h-4 w-4" /> {error}</p>}
-                  <button type="submit" disabled={loading} className="w-full py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition-all">
-                    {loading ? 'Verifying...' : 'Verify OTP'}
-                  </button>
-                </form>
-              )}
-            </div>
-          ) : (
-            <motion.div initial={{ scale: 0.8 }} animate={{ scale: 1 }} className="text-center py-8">
-              <CheckCircle2 className="h-20 w-20 text-emerald-500 mx-auto mb-4" />
-              <h2 className="text-2xl font-bold">Welcome Back!</h2>
-            </motion.div>
-          )}
-        </motion.div>
-      </main>
+          <button 
+            type="submit"
+            disabled={isLoading}
+            className="w-full py-4 bg-indigo-600 hover:bg-indigo-500 text-white font-black rounded-2xl transition-all shadow-xl shadow-indigo-600/20 flex items-center justify-center gap-2 group disabled:opacity-50"
+          >
+            {isLoading ? (
+              <div className="w-6 h-6 border-3 border-white/30 border-t-white rounded-full animate-spin" />
+            ) : (
+              <>
+                Continue <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
+              </>
+            )}
+          </button>
+        </form>
 
-      {/* Footer */}
-      <footer className="text-center text-slate-500 text-sm p-6">
-        <div className="flex justify-center gap-4 mb-2">
-          <a href="#" className="hover:underline">Privacy Policy</a>
-          <a href="#" className="hover:underline">Terms of Service</a>
+        <div className="mt-10 pt-8 border-t border-white/5 flex items-center justify-center gap-2 text-slate-500 text-xs font-medium">
+          <ShieldCheck className="h-4 w-4 text-emerald-500" />
+          Secure, encrypted connection
         </div>
-        <p>© 2026 Government Transport Authority</p>
-      </footer>
+      </motion.div>
+
+      {/* Footer Branding */}
+      <div className="absolute bottom-8 left-0 w-full text-center text-slate-600 text-xs font-bold uppercase tracking-[0.3em] pointer-events-none">
+        TNSTC Smart Transit System
+      </div>
     </div>
   );
 }

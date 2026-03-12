@@ -6,6 +6,7 @@ import { io } from 'socket.io-client';
 import { motion, AnimatePresence } from 'motion/react';
 import { Bus, Search, Navigation, Info, Clock, Map as MapIcon, ChevronRight, X } from 'lucide-react';
 import { WeatherAlert } from '../components/WeatherAlert';
+import { useLanguage } from '../utils/LanguageContext';
 
 // Custom Bus Icon using DivIcon for rotation
 const createBusIcon = (rotation: number) => L.divIcon({
@@ -35,6 +36,7 @@ const calculateHeading = (prev: any, curr: any) => {
 };
 
 export function LiveTracker() {
+  const { t } = useLanguage();
   const [buses, setBuses] = useState<any[]>([]);
   const [prevBuses, setPrevBuses] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -88,7 +90,7 @@ export function LiveTracker() {
 
   const calculateETA = (bus: any) => {
     const nextStop = bus.route_path.find((p: any) => p.name === bus.next_stop);
-    if (!nextStop) return 'Arriving soon';
+    if (!nextStop) return t('arrivingSoon');
     const R = 6371;
     const dLat = (nextStop.lat - bus.latitude) * Math.PI / 180;
     const dLon = (nextStop.lng - bus.longitude) * Math.PI / 180;
@@ -118,16 +120,16 @@ export function LiveTracker() {
         <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
           <h2 className="text-xl font-bold text-slate-800 mb-4 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Navigation className="h-5 w-5 text-indigo-600" /> Live Tracker
+              <Navigation className="h-5 w-5 text-indigo-600" /> {t('liveTracking')}
             </div>
             <span className="bg-indigo-100 text-indigo-700 text-xs font-bold px-2 py-1 rounded-full">
-              {buses.length} Active
+              {buses.length} {t('active')}
             </span>
           </h2>
           <form onSubmit={handleSearch} className="relative mb-4">
             <input 
               type="text" 
-              placeholder="Search Bus Number or Route ID..." 
+              placeholder={t('searchBusPlaceholder')} 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
@@ -179,30 +181,30 @@ export function LiveTracker() {
               >
                 <X className="h-4 w-4" />
               </button>
-              <h3 className="font-bold text-slate-800 mb-4">Bus Details</h3>
+              <h3 className="font-bold text-slate-800 mb-4">{t('busDetails')}</h3>
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
-                  <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">Status</span>
-                  <span className="px-2 py-0.5 bg-emerald-50 text-emerald-600 text-[10px] font-bold rounded uppercase tracking-wider">Running</span>
+                  <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">{t('status')}</span>
+                  <span className="px-2 py-0.5 bg-emerald-50 text-emerald-600 text-[10px] font-bold rounded uppercase tracking-wider">{t('running')}</span>
                 </div>
                 <div className="flex items-start gap-3">
                   <div className="mt-1"><Clock className="h-4 w-4 text-indigo-500" /></div>
                   <div>
-                    <div className="text-xs text-slate-400 font-medium">Next Stop</div>
+                    <div className="text-xs text-slate-400 font-medium">{t('nextStop')}</div>
                     <div className="text-sm font-bold text-slate-800">{selectedBus.next_stop}</div>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
                   <div className="mt-1"><Info className="h-4 w-4 text-indigo-500" /></div>
                   <div>
-                    <div className="text-xs text-slate-400 font-medium">Estimated Arrival</div>
+                    <div className="text-xs text-slate-400 font-medium">{t('estimatedArrival')}</div>
                     <div className="text-sm font-bold text-slate-800">{calculateETA(selectedBus)}</div>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
                   <div className="mt-1"><Navigation className="h-4 w-4 text-indigo-500" /></div>
                   <div>
-                    <div className="text-xs text-slate-400 font-medium">Current Speed</div>
+                    <div className="text-xs text-slate-400 font-medium">{t('currentSpeed')}</div>
                     <div className="text-sm font-bold text-slate-800">{selectedBus.speed} km/h</div>
                   </div>
                 </div>

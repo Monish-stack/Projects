@@ -1,10 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { MessageSquare, X, Send, Bot, User } from 'lucide-react';
+import { useLanguage } from '../utils/LanguageContext';
 
 export default function Chatbot() {
+  const { t } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<{role: 'user' | 'bot', text: string}[]>([
-    { role: 'bot', text: 'Hello! I am your Smart Bus Assistant. How can I help you today?' }
+    { role: 'bot', text: t('botGreeting') || 'Hello! I am your Smart Bus Assistant. How can I help you today?' }
   ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -17,6 +19,17 @@ export default function Chatbot() {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Update greeting when language changes
+  useEffect(() => {
+    setMessages(prev => {
+      const newMessages = [...prev];
+      if (newMessages.length > 0 && newMessages[0].role === 'bot') {
+        newMessages[0].text = t('botGreeting') || 'Hello! I am your Smart Bus Assistant. How can I help you today?';
+      }
+      return newMessages;
+    });
+  }, [t]);
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,11 +62,11 @@ export default function Chatbot() {
       if (data && data.reply) {
         setMessages(prev => [...prev, { role: 'bot', text: data.reply }]);
       } else {
-        setMessages(prev => [...prev, { role: 'bot', text: 'Sorry, I am having trouble connecting right now.' }]);
+        setMessages(prev => [...prev, { role: 'bot', text: t('botError') || 'Sorry, I am having trouble connecting right now.' }]);
       }
     } catch (error) {
       console.error("API request failed:", error);
-      setMessages(prev => [...prev, { role: 'bot', text: 'Sorry, an error occurred while connecting to the server.' }]);
+      setMessages(prev => [...prev, { role: 'bot', text: t('botNetworkError') || 'Sorry, an error occurred while connecting to the server.' }]);
     } finally {
       setLoading(false);
     }
@@ -75,7 +88,7 @@ export default function Chatbot() {
         <div className="bg-indigo-600 p-4 flex justify-between items-center text-white">
           <div className="flex items-center gap-2">
             <Bot className="h-5 w-5" />
-            <h3 className="font-bold">AI Assistant</h3>
+            <h3 className="font-bold">{t('aiAssistant') || 'AI Assistant'}</h3>
           </div>
           <button onClick={() => setIsOpen(false)} className="hover:bg-indigo-700 p-1 rounded-full transition-colors">
             <X className="h-5 w-5" />
@@ -109,7 +122,7 @@ export default function Chatbot() {
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Ask about buses, routes..."
+            placeholder={t('askAboutBuses') || 'Ask about buses, routes...'}
             className="flex-1 px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 text-sm"
           />
           <button 

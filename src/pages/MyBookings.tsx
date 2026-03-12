@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Ticket, Calendar, MapPin, Bus, Search } from 'lucide-react';
 import DigitalTicket from '../components/DigitalTicket';
+import { useLanguage } from '../utils/LanguageContext';
 
 export default function MyBookings() {
   const [bookings, setBookings] = useState<any[]>([]);
   const [selectedTicket, setSelectedTicket] = useState<any>(null);
+  const { t } = useLanguage();
 
   useEffect(() => {
     // Load from local storage
@@ -18,7 +20,7 @@ export default function MyBookings() {
     <div className="space-y-6">
       <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100">
         <h2 className="text-3xl font-display font-bold text-slate-800 tracking-tight flex items-center gap-3 mb-6">
-          <Ticket className="h-8 w-8 text-indigo-600" /> My Bookings
+          <Ticket className="h-8 w-8 text-indigo-600" /> {t('myBookings')}
         </h2>
 
         {bookings.length === 0 ? (
@@ -26,8 +28,8 @@ export default function MyBookings() {
             <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4">
               <Search className="h-10 w-10 text-slate-300" />
             </div>
-            <h3 className="text-xl font-bold text-slate-700 mb-2">No bookings found</h3>
-            <p className="text-slate-500">You haven't booked any bus tickets yet.</p>
+            <h3 className="text-xl font-bold text-slate-700 mb-2">{t('noBookingsFound')}</h3>
+            <p className="text-slate-500">{t('noBookingsDesc')}</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -55,8 +57,8 @@ export default function MyBookings() {
                     <span>{ticket.date} • {ticket.time}</span>
                   </div>
                   <div className="flex justify-between items-center pt-4 border-t border-indigo-100/50 mt-4">
-                    <span className="text-slate-500">Seat: <strong className="text-slate-800">{ticket.seatNumber}</strong></span>
-                    <span className="text-indigo-600 font-bold">View Ticket &rarr;</span>
+                    <span className="text-slate-500">{t('seat')}: <strong className="text-slate-800">{ticket.seatNumber}</strong></span>
+                    <span className="text-indigo-600 font-bold">{t('viewTicket')} &rarr;</span>
                   </div>
                 </div>
               </div>
